@@ -1,0 +1,6 @@
+temp
+__pycache__
+.idea
+venv
+LibDriver/__pycache__
+LibDriver/Lib/*.dll

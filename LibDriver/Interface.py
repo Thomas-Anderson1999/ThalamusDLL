@@ -147,16 +147,33 @@ def InitSimulation(AsmFileName,SimWindowText):
 
     global GetVisibleFacetPntFunc
     GetVisibleFacetPntFunc = TestDLL['GetVisibleFacetPnt']
-    GetVisibleFacetPntFunc.argtypes = (ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)
+    GetVisibleFacetPntFunc.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)
     GetVisibleFacetPntFunc.restype = ctypes.c_int
 
+    global LoadBinDepthMapPntFunc
+    LoadBinDepthMapPntFunc = TestDLL['LoadBinDepthMap']
+    LoadBinDepthMapPntFunc.argtypes = (ctypes.c_char_p, ctypes.c_int, ctypes.c_int, ctypes.c_float, ctypes.c_float, ctypes.c_void_p, ctypes.c_void_p)
+    LoadBinDepthMapPntFunc.restype = ctypes.c_int
+
+    global MeshUpDepthMapFunc
+    MeshUpDepthMapFunc = TestDLL['MeshUpDepthMap']
+    MeshUpDepthMapFunc.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int)
+    MeshUpDepthMapFunc.restype = ctypes.c_int
 
 
-def GetVisibleFacetPnt(p1):
-    VertexNum = np.zeros(1024, np.int32)
-    ID = np.zeros(1024, np.int32)
-    Vertex = np.zeros(1024*3, np.float32)
-    FacetNum = GetVisibleFacetPntFunc(p1, VertexNum.ctypes, ID.ctypes, Vertex.ctypes)
+def ObjMeshUp(p1, p2, p3, p4):
+    return MeshUpDepthMapFunc(p1, p2, p3, p4)
+
+def LoadBinDepthMapPnt(p1, p2, p3, p4, p5, p6, p7):
+    filename = ctypes.c_char_p()
+    filename.value = p1.encode('utf-8')
+    return LoadBinDepthMapPntFunc(filename, p2, p3, p4, p5, p6, p7)
+
+def GetVisibleFacetPnt(p1, p2):
+    VertexNum = np.zeros(10240, np.int32)
+    ID = np.zeros(10240, np.int32)
+    Vertex = np.zeros(10240*3, np.float32)
+    FacetNum = GetVisibleFacetPntFunc(p1, p2, VertexNum.ctypes, ID.ctypes, Vertex.ctypes)
 
     return FacetNum, ID, VertexNum, Vertex
 
@@ -313,7 +330,25 @@ class cFacet:
 def RetrunVisibleFacet(ID):
     Result = []
     v = 0
-    FacetNum, FacetID, VertexNum, Vertex = GetVisibleFacetPnt(ID)
+    FacetNum, FacetID, VertexNum, Vertex = GetVisibleFacetPnt(ID, 1)
+    for f in range(FacetNum):
+        Facet = cFacet()
+        Facet.FacetID = FacetID[f]
+
+        for k in range(VertexNum[f]):
+            Facet.Vertex.append([Vertex[3 * v + 0], Vertex[3 * v + 1], Vertex[3 * v + 2]])
+            px, py = Convert3DtoPixel(Vertex[3 * v + 0], Vertex[3 * v + 1], Vertex[3 * v + 2])
+            Facet.Pixel.append([px, py])
+            v += 1
+
+        Result.append(Facet)
+    return Result
+
+def RetrunAllFacet(ID):
+
+    Result = []
+    v = 0
+    FacetNum, FacetID, VertexNum, Vertex = GetVisibleFacetPnt(ID, 0)
     for f in range(FacetNum):
         Facet = cFacet()
         Facet.FacetID = FacetID[f]

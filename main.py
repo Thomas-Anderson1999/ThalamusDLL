@@ -12,7 +12,7 @@ if __name__ == '__main__':
     print(cv2.__version__)
     print(os.getcwd())
 
-    AsmFileName = b"Script.txt"
+    AsmFileName = b"ScriptFreeModel.txt"
     SimWindowText = b"GL Exam1"
     InitSimulation(AsmFileName, SimWindowText)
 
@@ -25,6 +25,7 @@ if __name__ == '__main__':
     Depth_Mask = np.zeros((im_height, im_width, 3), np.uint8)
     Depth_Map = np.zeros((im_height, im_width), np.float32)
     Color_Img = np.zeros((im_height, im_width, 3), np.uint8)
+    SingleMask = np.zeros((im_height, im_width), np.uint8)
 
     PosTest_x = 0
     AttTest_x = 0
@@ -49,6 +50,23 @@ if __name__ == '__main__':
             Depth_Map = cv2.normalize(Depth_Map, None, alpha=0, beta=1.0, norm_type=cv2.NORM_MINMAX)
             cv2.imshow("Depth Map", Depth_Map);
             cv2.imshow("Depth Mask", EdgeMask);
+
+        if k == ord('l'): #Load Binary DepthMap
+            if 0 != LoadBinDepthMapPnt("DepthPnt.txt", im_width, im_height, 600, 6000, Depth_Map.ctypes, SingleMask.ctypes):
+                Depth_Map = cv2.normalize(Depth_Map, None, alpha=0, beta=1.0, norm_type=cv2.NORM_MINMAX)
+                cv2.imshow("Depth Map", Depth_Map);
+                cv2.imshow("Depth Mask", SingleMask);
+            else:
+                print("Loading Error")
+
+        if k == ord('m'):  # Mesh Up
+            MeshUpObjID = 4     #FREEMODEL Type ID
+            MeshInterval = 10   #Interval for making triangles
+            ret = ObjMeshUp(im_width, im_height, MeshUpObjID, MeshInterval)
+            print(ret)
+
+        if k == ord('g'):  #get vetex
+            print(GetVisibleFacetPnt(0, 0))
 
         elif k == ord('f'):  # f : Get Facet Vertex
 
